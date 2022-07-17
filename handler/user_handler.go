@@ -3,26 +3,29 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	. "src/dto"
-	. "src/domain"
+	. "src/model"
+        . "src/repository"
 	"errors"
+	"time"
+        . "fmt" 
 )
 
 var users = []User{}
 
 type UserHandler struct {
-	userRepository UserRepository
+	UserRepository UserRepository
 }
 
-func (UserHandler *UserHandler) ValidateDuplicateUser(id string) bool {
+func (userHandler *UserHandler) ValidateDuplicateUser(id string) bool {
 	for _, user := range users {
-		if id == user.Id() {
+		if id == user.Id {
 			return false
 		}
 	}
 	return true
 }
 
-func (UserHandler *UserHandler) CreateUser(c *gin.Context) {
+func (userHandler *UserHandler) CreateUser(c *gin.Context) {
 
 	createUserRequest := CreateUserRequest{}
 
@@ -32,16 +35,26 @@ func (UserHandler *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	if UserHandler.ValidateDuplicateUser(createUserRequest.Id) == false {
+	if userHandler.ValidateDuplicateUser(createUserRequest.Id) == false {
 		err := errors.New("User with id '" + createUserRequest.Id + "' already exists")
 		c.JSON(400, err.Error())
 		return
 	}
 
-	user := NewUser(createUserRequest.Id, createUserRequest.Name, createUserRequest.Level, createUserRequest.Password)
-	users = append(users, *user)
+	user := User {Id: createUserRequest.Id, 
+                      Name: createUserRequest.Name, 
+                      Level: createUserRequest.Level, 
+                      Password: createUserRequest.Password,
+                      CreatedAt: time.Now(),
+                      UpdatedAt: time.Now()}
 
-	createUserResponse := CreateUserResponse{user.Id(), user.Name(), user.Level()}
+	newUser, err := userHandler.UserRepository.Save(user)
+	if err != nil {
+		c.JSON(400, err.Error())
+		return
+	}
+
+	createUserResponse := CreateUserResponse{newUser.Id, newUser.Name, newUser.Level}
 
 	result := []CreateUserResponse{createUserResponse}
 
@@ -50,21 +63,28 @@ func (UserHandler *UserHandler) CreateUser(c *gin.Context) {
 	return
 }
 
-func (UserHandler *UserHandler) SearchUser(c *gin.Context) {
+func (userHandler *UserHandler) SearchUser(c *gin.Context) {
 
 	id := c.Query("id")
 
 	result := []SearchUserResponse{}
-	for _, user := range users {
-		if id == "" {
-			searchUserResponse := SearchUserResponse{user.Id(), user.Name(), user.Level()}
-			result = append(result, searchUserResponse)
-		} else if id == user.Id() {
-			searchUserResponse := SearchUserResponse{user.Id(), user.Name(), user.Level()}
-			result = append(result, searchUserResponse)
-			break
-		}
-	}
+
+	if id != "" {
+            user := userHandler.UserRepository.Find(id)
+	    searchUserResponse := SearchUserResponse{user.Id, user.Name, user.Level}
+            result = append(result, searchUserResponse)
+	} else {
+	    users := userHandler.UserRepository.FindAll()
+
+	    Println("Complete in fetching")
+
+            for _, user := range users {
+	    	searchUserResponse := SearchUserResponse{user.Id, user.Name, user.Level}
+	    	result = append(result, searchUserResponse)
+            } 
+	    
+            Println("Complete filling data")
+        }
 
 	c.JSON(200, gin.H{"data": result,})
 	return
