@@ -3,42 +3,72 @@ package main
 import (
     "github.com/gin-gonic/gin"
     . "src/handler"
-    . "src/repository"
-    . "src/model"
     "gorm.io/gorm"
+    "gorm.io/gorm/logger"
     "gorm.io/driver/postgres"
+    "log"
+    "os"
+    "time"
 )
 
-func initializeSchema(db *gorm.DB){
-    db.Migrator().CreateTable(&User{})
+func CORSMiddleware() gin.HandlerFunc {
+
+    return func(c *gin.Context) {
+
+        c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, Origin")
+        c.Header("Access-Control-Allow-Credentials", "true")
+        c.Header("Access-Control-Allow-Origin", "*")
+        c.Header("Access-Control-Allow-Methods", "GET, DELETE, POST, PUT")
+
+        if c.Request.Method == "OPTIONS" {
+            c.AbortWithStatus(204)
+            return
+        }
+        
+        c.Next()
+    }
 }
 
 func main() {
 
+    //
+    newLogger := logger.New(
+                    log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+                    logger.Config{
+                        SlowThreshold:              time.Second,   // Slow SQL threshold
+                        LogLevel:                   logger.Info, // Log level
+                        IgnoreRecordNotFoundError: true,           // Ignore ErrRecordNotFound error for logger
+                        Colorful:                  false,          // Disable color
+                    },
+                )
+
     //DB connection
     conn := "host=localhost user=jhlee password=jhlee dbname=mydb sslmode=disable"
-    db, err := gorm.Open(postgres.Open(conn), &gorm.Config{})
+    db, err := gorm.Open(postgres.Open(conn), &gorm.Config{Logger: newLogger,})
     if err != nil {
         panic("Fail to connect to the DB")
     }
 
-    //Initialize DB schema
-    initializeSchema(db)
-    
     //Dependency injection
-    userRepository := UserRepository{db}
-    userHandler := UserHandler{userRepository}
-
+    rootHandler := RootHandler{db}
+    rootHandler.Init()
 
     router := gin.Default()
-    router.GET("/ping", func(c *gin.Context) {
-        c.JSON(200, gin.H{
-            "message": "pong",
-        })
-    })
+//  router.LoadHTMLGlob("templates/*.html")
+    router.Use(CORSMiddleware())
+
+
+    router.GET("/users", rootHandler.SearchUser)
+    router.POST("/users", rootHandler.CreateUser)
+    router.PUT("/users", rootHandler.UpdateUser)
+
+    router.POST("/posts", rootHandler.CreatePost)
+    router.GET("/posts", rootHandler.SearchAllPost)
+    router.PUT("/posts/:id", rootHandler.UpdateContent)
     
-    router.GET("/users", userHandler.SearchUser)
-    router.POST("/users", userHandler.CreateUser)
+//    router.POST("/posts/:id/comments", rootHandler.AddComment)
+//    router.POST("/posts/:id/like", rootHandler.UpdateContent)    
+//    router.PUT("/posts/:id/dislike", rootHandler.UpdateContent)
     
     router.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
