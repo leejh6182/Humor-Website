@@ -3,7 +3,6 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	. "src/dto"
-    //. "fmt"
     "gorm.io/gorm"
     "errors"
 )
@@ -111,4 +110,44 @@ func (rootHandler *RootHandler) UpdateUser(c *gin.Context) {
     c.JSON(200, gin.H{"data": result,})
     return 	
 }
+
+func(rootHandler *RootHandler) Login(c *gin.Context) {
+
+    loginRequest := LoginRequest{}
+    
+    err := c.Bind(&loginRequest)    
+    if err != nil {
+        c.JSON(400, err.Error)
+        return
+    }
+
+    user := user{}
+
+    dbErr := rootHandler.Db.Where("user_id = ?", loginRequest.Id).First(&user)
+    if errors.Is(dbErr.Error, gorm.ErrRecordNotFound) {           
+        c.JSON(500, "Invalid user")
+        return
+    } else if dbErr.Error != nil {
+        c.JSON(500, dbErr.Error)
+        return
+    } 
+
+    if user.Password != loginRequest.Password {
+        c.JSON(401, "Invalid password")
+        return 
+    } 
+
+    token, jwtErr := CreateJWT(user.UserId, user.Name, user.Email)
+    if jwtErr != nil {
+       c.JSON(500, jwtErr) 
+       return
+    }
+
+    result := LoginResponse{Id: user.UserId, Token: token} 
+    
+	c.JSON(200, gin.H{"data": result,})
+    return
+}
+
+
 

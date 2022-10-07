@@ -33,3 +33,10 @@ type comment struct{
     Comments []comment
 }
 
+type authTokenClaim struct {
+    
+    UserId string `json:"userid"`
+    Name string `json:"name"`
+    Email string `json:"email"`
+}
+

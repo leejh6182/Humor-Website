@@ -1,0 +1,50 @@
+package repository
+
+import (
+    "gorm.io/gorm"
+)
+
+type UserRepository struct {
+	db *gorm.DB
+}
+
+func NewUserRepository(db *gorm.DB ) *UserRepository {
+    userRepository := UserRepository {db}
+    db.AutoMigrate(&user{})
+    return &userRepository
+}
+
+func (userRepository *UserRepository) Create(user *user) (*user, error) {
+    result := userRepository.db.Create(user)
+    if result.Error != nil {
+	return nil, result.Error
+    }
+
+    return user, nil
+}
+
+func (userRepository *UserRepository) Find(id string) (*user) {
+    user := user{}
+    result := userRepository.db.Where("user_id = ?", id).First(&user)
+    if result.Error != nil {
+        return nil
+    }
+
+    return &user
+}
+     
+func (userRepository *UserRepository) FindAll() ([]*user) {
+    users := []*user{}
+    result := userRepository.db.Find(&users)
+    if result.Error != nil {
+        return users
+    }
+
+    return users
+}
+
+func (userRepository *UserRepository) Update(user *user) *user {
+    userRepository.db.Save(user)
+    return user
+}
+

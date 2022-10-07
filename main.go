@@ -69,6 +69,8 @@ func main() {
 //    router.POST("/posts/:id/comments", rootHandler.AddComment)
 //    router.POST("/posts/:id/like", rootHandler.UpdateContent)    
 //    router.PUT("/posts/:id/dislike", rootHandler.UpdateContent)
+
+    router.POST("/login", rootHandler.Login)
     
     router.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }

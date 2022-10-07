@@ -31,3 +31,15 @@ type UpdateUserRequest struct {
     Email string `json:"email"`
     Password string `json:"password"`
 }
+
+type LoginRequest struct {
+    Id string `json:"id" binding:"required"`
+    Password string `json:"password" binding: "required"`
+}
+
+type LoginResponse struct {
+    Id string `json:"id"`
+    Token string `json:"token"`    
+}
+
+
