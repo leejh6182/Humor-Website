@@ -1,7 +1,12 @@
 import React, { Component } from "react";
 import axios from "axios";
-
-const serverUrl = "http://115.85.181.25:8080";
+import config from "./config.json";
+import { Button } from 'primereact/button';
+import { InputText } from 'primereact/inputtext';
+import "primereact/resources/themes/lara-light-indigo/theme.css";  //theme
+import "primereact/resources/primereact.min.css";                  //core css
+import "primeicons/primeicons.css";     
+import { Password } from 'primereact/password';
 
 class User{
     constructor(userId, name, address, email, level, password){
@@ -41,10 +46,10 @@ class CreateUser extends Component{
             return;
         }
 
-        var requestUrl = serverUrl + "/users";
+        var requestUrl = config.SERVER_URL + "/users";
         var user = new User(this.state.userId.toString(), this.state.name.toString(), this.state.address, this.state.email, 1, this.state.password.toString());
 
-        axios
+        await axios
         .post(requestUrl, user)
         .then(response => {
             alert("Registration is done!");
@@ -55,7 +60,6 @@ class CreateUser extends Component{
                 // 요청이 이루어졌으며 서버가 2xx의 범위를 벗어나는 상태 코드로 응답했습니다.
                 if (error.response.data) {
                     alert(error.response.data["Detail"])
-                    //alert(error.message)
                 }
                 else {
                     alert('Error: ' +  error.message)
@@ -79,15 +83,15 @@ class CreateUser extends Component{
 
         return (
                 <form onSubmit={this.handleSubmit} >
-                    <h4>회원가입</h4>
+                    <h4>Sign Up</h4>
                     <p></p>
-                    <p> ID: <input type="text" name="userId" value={this.state.userId} onChange={this.handleChange}/> </p>
-                    <p> NAME: <input type="text" name="name" value={this.state.name} onChange={this.handleChange}/></p>
-                    <p> ADDRESS: <input type="text" name="address" value={this.state.address} onChange={this.handleChange}/></p>
-                    <p> EMAIL: <input type="text" name="email" value={this.state.email} onChange={this.handleChange}/></p>
-                    <p> PASSWORD: <input type="password" name="password" value={this.state.password} onChange={this.handleChange}/></p>
-                    <p> CONFIRM PASSWORD: <input type="password" name="confirmPassword" value={this.state.confirmPassword} onChange={this.handleChange}/></p>
-                    <button type="submit">가입</button>
+                    <p> ID: <InputText name="userId" value={this.state.userId} onChange={this.handleChange}/> </p>
+                    <p> NAME: <InputText name="name" value={this.state.name} onChange={this.handleChange}/> </p>
+                    <p> ADDRESS: <InputText name="address" value={this.state.address} onChange={this.handleChange}/> </p>
+                    <p> EMAIL: <InputText name="email" value={this.state.email} onChange={this.handleChange}/> </p>
+                    <p> PASSWORD: <Password name="password" value={this.state.password} onChange={this.handleChange}/> </p>
+                    <p> CONFIRM PASSWORD: <Password name="confirmPassword" value={this.state.confirmPassword} onChange={this.handleChange}/> </p>
+                    <Button type="submit" label="Submit"></Button>
                 </form>);
     }
 }
@@ -102,7 +106,7 @@ class SearchUser extends Component{
     handleSubmit = async (event) => {
         event.preventDefault()
 
-        var requestUrl = serverUrl + "/users";
+        var requestUrl = config.SERVER_URL + "/users";
 
         axios
         .get(requestUrl, {params: { userId: this.state.userId} })
@@ -127,7 +131,7 @@ class SearchUser extends Component{
         return (
                 <div>
                 <form onSubmit={this.handleSubmit} >
-                    <h4>회원검색</h4>
+                    <h4>Search User</h4>
                     <p></p>
                     <p> USER ID: <input type="text" name="userId" value={this.state.userId} onChange={this.handleChange}/> </p>
                     <button type="submit">검색</button>
