@@ -3,26 +3,40 @@ package handler
 import (
     "github.com/golang-jwt/jwt"
     "time"
+    . "fmt"
+    "strconv"
 )
 
-func CreateJWT(userId string, name string, email string) (string, error) {
-    signKey := []byte("TEST")
+var SIGNKEY = []byte("TEST")
+
+func CreateToken(claim authTokenClaim) (string, error) {
 
     token := jwt.New(jwt.SigningMethodHS256)
     
     claims := token.Claims.(jwt.MapClaims)
-    claims["userid"] = userId
-    claims["name"] = name
-    claims["email"] = email
-    claims["admin"] = false
+    claims["userid"] = claim.UserId
+    claims["email"] = claim.Email
+    claims["level"] = strconv.Itoa(claim.Level)
     claims["exp"] = time.Now().Add(time.Minute * 60).Unix()
 
-    tk, error := token.SignedString(signKey)
+    tk, error := token.SignedString(SIGNKEY)
     if error != nil {
         return "", error
     }
 
     return tk, nil
+}
+
+func ValidateToken(tokenString string) (*jwt.Token, error) {
+
+    //Parse token and validate signature
+    return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+            return nil, Errorf("Unexpected signing method: %v", token.Header["alg"])
+        }
+
+        return SIGNKEY, nil
+    })
 }
 
 

@@ -34,9 +34,8 @@ type comment struct{
 }
 
 type authTokenClaim struct {
-    
-    UserId string `json:"userid"`
-    Name string `json:"name"`
-    Email string `json:"email"`
+    UserId string
+    Email string
+    Level int
 }
 

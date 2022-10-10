@@ -24,7 +24,23 @@ func CORSMiddleware() gin.HandlerFunc {
             c.AbortWithStatus(204)
             return
         }
-        
+   
+        if c.Request.URL.Path != "/login"{
+
+            tokenString, err := c.Cookie("token")
+            if err != nil {
+                c.JSON(400, err)
+                return
+            }
+
+            //Validate token
+            _, err = ValidateToken(tokenString)
+            if err != nil {
+                c.JSON(401, err)
+                return
+            }
+        }
+
         c.Next()
     }
 }

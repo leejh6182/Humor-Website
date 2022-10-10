@@ -137,7 +137,8 @@ func(rootHandler *RootHandler) Login(c *gin.Context) {
         return 
     } 
 
-    token, jwtErr := CreateJWT(user.UserId, user.Name, user.Email)
+    claim := authTokenClaim {user.UserId, user.Email, user.Level}
+    token, jwtErr := CreateToken(claim)
     if jwtErr != nil {
        c.JSON(500, jwtErr) 
        return
@@ -148,6 +149,4 @@ func(rootHandler *RootHandler) Login(c *gin.Context) {
 	c.JSON(200, gin.H{"data": result,})
     return
 }
-
-
 
